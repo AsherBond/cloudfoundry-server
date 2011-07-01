@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eux
+set -ux
 
 # Allow VCAP_REPO to be overriden for testing
 VCAP_REPO=${VCAP_REPO:-https://github.com/cloudfoundry/vcap.git}
@@ -122,6 +122,8 @@ cd $INSTALL_DIR/vcap
 for GEM in `find ./ -name *.gem |sed -e '/^\.\/tests/d' -e '/rabbit/d'`; do cp $GEM $TEMPDIR; done
 #remove any versions of rake that may break the db setup
 rm -f $TEMPDIR/rake-*.gem
+#remove postgres gem as we aren't utlizing it right now
+rm -f TEMPDIR/pg-*.gem
 cd $TEMPDIR
 #install all gems for RVM installed ruby 1.9.2
 for GEM in `ls -1`; do
