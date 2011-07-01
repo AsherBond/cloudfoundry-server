@@ -17,7 +17,7 @@ echo ""
 
 add-apt-repository "deb http://ppa.launchpad.net/canonical-sig/3rd-party-testing/ubuntu natty main"
 apt-get -y update
-apt-get -y install git-core ruby ruby-rvm libsqlite3-dev ruby-full rake rubygems nginx lsof psmisc redis-server ruby1.9.1-full libmysqlclient-dev rubygems1.9.1 mongodb nodejs erlang libxslt1-dev libssl-dev
+apt-get -y install git-core ruby ruby-rvm libsqlite3-dev ruby-full rake rubygems nginx lsof psmisc redis-server ruby1.9.1-full libmysqlclient-dev rubygems1.9.1 nodejs erlang libxslt1-dev libssl-dev
 
 echo "Activate rvm"
 HOME="/root"
@@ -128,11 +128,7 @@ for GEM in `ls -1`; do
     gem install $GEM --no-rdoc --no-ri;
 done
 #Unload rvm, but create cloud_controller db structure first
-cd $INSTALL_DIR/vcap
-rm -f cloud_controller/db/*.sqlite3
-rake db:migrate
 rvm reset
-cd $TEMPDIR
 #install all gems for sytem rubies as they will be used by the DEAs
 for GEM in `ls -1`; do
     /usr/bin/gem1.8 install $GEM --no-rdoc --no-ri;

@@ -2,6 +2,6 @@
 
 export rvm_trust_rvmrcs_flag=1 # Trust all rmvrcs we find
 source /etc/rvmrc
-source /etc/profile.d/rvm.sh
+source /etc/profile
 
 cd /opt/cloudfoundry-server/vcap && ./bin/vcap start&
