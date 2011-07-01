@@ -1,13 +1,13 @@
 #!/bin/bash
 
-set -eux
+set -x
 
 # Allow VCAP_REPO to be overriden for testing
 VCAP_REPO=${VCAP_REPO:-https://github.com/cloudfoundry/vcap.git}
-
-export rvm_trust_rvmrcs_flag=1 # Trust all rvmrcs we find
-
 PLATFORM='Linux'
+INSTALL_DIR='/opt/cloudfoundry-server'
+
+export rvm_trust_rvmrcs_flag=1 # Trust all rmvrcs we find
 
 echo ""
 echo '-----------------------------------------------------------'
@@ -16,8 +16,8 @@ echo '-----------------------------------------------------------'
 echo ""
 
 add-apt-repository "deb http://ppa.launchpad.net/canonical-sig/3rd-party-testing/ubuntu natty main"
-apt-get -y update
-apt-get -y install coreutils autoconf curl git-core ruby bison build-essential zlib1g-dev libssl-dev libreadline5-dev ruby-rvm
+apt-get -qqy update
+apt-get -y install git-core ruby ruby-rvm libsqlite3-dev ruby-full rake rubygems nginx lsof psmisc redis-server ruby1.9.1-full libmysqlclient-dev rubygems1.9.1 mongodb nodejs erlang libxslt1-dev libssl-dev
 
 echo "Activate rvm"
 HOME="/root"
@@ -37,8 +37,8 @@ rvm use 1.9.2
 gem install rake --version '0.8.7' --no-rdoc --no-ri
 
 echo "Getting vcap"
-[ -d ~/cloudfoundry ] || mkdir ~/cloudfoundry
-cd ~/cloudfoundry
+[ -d $INSTALL_DIR ] || mkdir -p $INSTALL_DIR
+cd $INSTALL_DIR
 
 [ -d vcap ] || git clone $VCAP_REPO
 cd vcap
@@ -46,7 +46,7 @@ git submodule update --init
 gem install vmc --no-rdoc --no-ri
 
 echo "Setting up vcap."
-cd ~/cloudfoundry/vcap
+cd $INSTALL_DIR/vcap
 
 ##RUN VCAP SETUP##
 #######################################################################
@@ -57,14 +57,11 @@ echo "($PLATFORM) Setup for VMware's Cloud Application Platform!"
 echo '-----------------------------------------------------------'
 echo ""
 
-apt-get install -y wget curl libcurl3 libcurl3-dev bison build-essential zlib1g-dev libssl-dev libreadline5-dev libxml2 libxml2-dev libxslt1.1 libxslt1-dev git-core sqlite3 libsqlite3-ruby libsqlite3-dev unzip zip ruby-full rake rubygems nginx lsof psmisc librmagick-ruby python-software-properties redis-server rabbitmq-server
-
 add-apt-repository "deb http://archive.canonical.com/ lucid partner"
-apt-key adv --keyserver keyserver.ubuntu.com --recv-keys AED4B06F473041FA
-apt-get -y update
+apt-get -qqy update
 echo sun-java6-jdk shared/accepted-sun-dlj-v1-1 boolean true | sudo /usr/bin/debconf-set-selections
 echo sun-java6-jre shared/accepted-sun-dlj-v1-1 boolean true | sudo /usr/bin/debconf-set-selections
-apt-get install -y curl sun-java6-bin sun-java6-jre sun-java6-jdk
+apt-get install -qqy curl sun-java6-bin sun-java6-jre sun-java6-jdk
 
 echo "Creating default directories at /var/vcap"
 
@@ -77,40 +74,21 @@ if [ ! -d '/var/vcap' ]; then
     chmod -R 777 /var/vcap
 fi
 
-gem install bundler -v 1.0.10 --no-rdoc --no-ri
-
 #######################################################################
 
 MYSQL_PASS="$(cat /dev/urandom | tr -dc _A-Z-a-z-0-9 | head -c10)"
+#POSTGRESQL_PASS="$(cat /dev/urandom | tr -dc _A-Z-a-z-0-9 | head -c10)"
 
-echo "Installing PostgreSQL server and support"
-apt-get install -y postgresql libpq-dev
-echo "Installing pg gems"
-gem install pg --no-rdoc --no-ri
-echo ""
+#echo "Installing PostgreSQL server and support"
+#apt-get install -qqy postgresql libpq-dev
+#su - postgres -c "/usr/bin/psql -c \"alter role postgres password '$POSTGRESQL_PASS'\""
+#echo "Installing pg gems"
+#gem install pg --no-rdoc --no-ri
+#echo ""
 echo "Installing MySQL server and support"
 echo mysql-server-5.1 mysql-server/root_password select $MYSQL_PASS | sudo debconf-set-selections
 echo mysql-server-5.1 mysql-server/root_password_again select $MYSQL_PASS | sudo debconf-set-selections
-apt-get install -y mysql-server ruby-dev libmysql-ruby libmysqlclient-dev
-echo "Installing mysql gems"
-gem install mysql --no-rdoc --no-ri
-echo ""
-
-# note: vcap start runs db:migrate on each cloud boot
-# no need to run anything during setup
-
-echo "Setting up Ruby System Gems and Support"
-apt-get install -y ruby-dev libmysql-ruby libmysqlclient-dev libpq-dev postgresql-client 
-
-echo "Setting up for support for DEA"
-add-apt-repository "deb http://http.us.debian.org/debian sid main contrib non-free"
-apt-get -y update
-apt-get install --force-yes -y nodejs erlang || true
-
-echo "Installing some default system gems"
-echo "gem: --no-rdoc --no-ri" > ~/.gemrc
-
-gem install rack thin sinatra eventmachine
+apt-get install -qqy mysql-server
 
 if [ ! -d '/var/vcap.local' ]; then
     echo "Creating directory /var/vcap.local"
@@ -121,30 +99,69 @@ fi
 ## END VCAP SETUP ##
 #######################################################################
 
-cd ~/cloudfoundry/vcap/services/mysql/config
-sed -i.bkup -e "s/pass: root/pass: $MYSQL_PASS/" mysql_node.yml
+cd $INSTALL_DIR/vcap/services/mysql/config
+sed -i.bak -e "s/pass: root/pass: $MYSQL_PASS/" mysql_node.yml
+#if [ -d $INSTALL_DIR/vcap/services/postgresql ]; then
+#    cd $INSTALL_DIR/vcap/services/postgresql/config
+#    sed -i.bkup -e "s/9.0/8.4/g" postgresql_gateway.yml
+#    sed -i.bkup -e "s/user: vcap/user: postgres/" -e "s/pass: vcap/pass: $POSTGRESQL_PASS/" postgresql_node.yml
+#fi
 
 echo "Restarting nginx"
-cd ~/cloudfoundry/vcap
+cd $INSTALL_DIR/vcap
 cp setup/simple.nginx.conf /etc/nginx/nginx.conf
 /etc/init.d/nginx restart
 
 echo "Installing bundler"
-cd ~/cloudfoundry/vcap
 gem install bundler --no-rdoc --no-ri
 rake bundler:install
 
-# don't start up vcap in this shell
-# its best to exit the shell and then
-# come back in so that the .rvmrc in cloudfoundry/vcap activates correctly
-
 #Install all bundled gems
 TEMPDIR=`mktemp -d`
-mkdir -p $TEMPDIR
-cd ~/cloudfoundry/vcap
-for DIR in `find ./ -name cache`; do cp $DIR/*.gem $TEMPDIR; done
+cd $INSTALL_DIR/vcap
+for GEM in `find ./ -name *.gem |sed -e '/^\.\/tests/d' -e '/rabbit/d'`; do cp $GEM $TEMPDIR; done
+#remove any versions of rake that may break the db setup
+rm -f $TEMPDIR/rake-*.gem
 cd $TEMPDIR
-for GEM in `ls -1`; do gem install $GEM --no-rdoc --no-ri; done
+#install all gems for RVM installed ruby 1.9.2
+for GEM in `ls -1`; do
+    gem install $GEM --no-rdoc --no-ri;
+done
+#Unload rvm, but create cloud_controller db structure first
+cd $INSTALL_DIR/vcap
+rm -f cloud_controller/db/*.sqlite3
+rake db:migrate
+rvm reset
+cd $TEMPDIR
+#install all gems for sytem rubies as they will be used by the DEAs
+for GEM in `ls -1`; do
+    /usr/bin/gem1.8 install $GEM --no-rdoc --no-ri;
+    /usr/bin/gem1.9.1 install $GEM --no-rdoc --no-ri;
+done
+#cleanup gem cache
+cd && rm -rf $TEMPDIR
+
+#Remove any version of rake >= 0.9 as it causes issues with cc/hm
+for RUBY in ruby-1.8.7-p334 ruby-1.8.7-p334@global ruby-1.9.2-p180 ruby-1.9.2-p180@global; do
+    rvm use $RUBY
+    gem uninstall rake -x --version=0.9.1 || true
+    gem uninstall rake -x --version=0.9.2 || true
+done
+
+/usr/bin/gem1.8 uninstall rake -x --version=0.9.1 || true
+/usr/bin/gem1.8 uninstall rake -x --version=0.9.2 || true
+/usr/bin/gem1.9.1 uninstall rake -x --version=0.9.1 || true
+/usr/bin/gem1.9.1 uninstall rake -x --version=0.9.2 || true
+
+#Modify DEA config to set proper paths for executables
+cd $INSTALL_DIR/vcap/dea/config
+sed -i.bak -e 's#executable:\ /usr/bin/ruby#executable:\ /usr/bin/ruby1\.8#g'\
+           -e 's#executable:\ ruby#executable:\ /usr/bin/ruby1\.9#g'\
+           -e 's#executable:\ /var/vcap/runtimes/erlang-R14B02/bin/erl#executable:\ erlang#g'\
+           dea.yml
+sed -i.bak -e 's#executable:\ /usr/bin/ruby#executable:\ /usr/bin/ruby1\.8#g'\
+           -e 's#executable:\ ruby#executable:\ /usr/bin/ruby1\.9#g'\
+           dea2.yml
 
 echo 'Success!'
 

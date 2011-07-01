@@ -1,13 +1,7 @@
 #!/bin/bash
 
 export rvm_trust_rvmrcs_flag=1 # Trust all rmvrcs we find
-source /etc/profile
 source /etc/rvmrc
-cd ~/cloudfoundry/vcap && ./bin/vcap start cloud_controller && sleep 5
-cd ~/cloudfoundry/vcap && ./bin/vcap start router && sleep 5
-cd ~/cloudfoundry/vcap && ./bin/vcap start dea && sleep 5
-cd ~/cloudfoundry/vcap && ./bin/vcap start router && sleep 5
-cd ~/cloudfoundry/vcap && ./bin/vcap start health_manager && sleep 5
-cd ~/cloudfoundry/vcap && ./bin/vcap start redis && sleep 5
-cd ~/cloudfoundry/vcap && ./bin/vcap start mysql && sleep 5
-cd ~/cloudfoundry/vcap && ./bin/vcap start mongodb && sleep 5
+source /etc/profile.d/rvm.sh
+
+cd /opt/cloudfoundry-server/vcap && ./bin/vcap start&
