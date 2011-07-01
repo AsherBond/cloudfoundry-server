@@ -1,0 +1,151 @@
+#!/bin/bash
+
+set -x 
+
+# Allow VCAP_REPO to be overriden for testing
+VCAP_REPO=${VCAP_REPO:-https://github.com/cloudfoundry/vcap.git}
+
+export rvm_trust_rvmrcs_flag=1 # Trust all rmvrcs we find
+
+PLATFORM='Linux'
+
+echo ""
+echo '-----------------------------------------------------------'
+echo "($PLATFORM) One Click Installer for VMware's Cloud Application Platform!"
+echo '-----------------------------------------------------------'
+echo ""
+
+add-apt-repository "deb http://ppa.launchpad.net/canonical-sig/3rd-party-testing/ubuntu natty main"
+apt-get -qqy update
+apt-get -y install coreutils autoconf curl git-core ruby bison build-essential zlib1g-dev libssl-dev libreadline5-dev ruby-rvm
+
+echo "Activate rvm"
+HOME="/root"
+source /etc/rvmrc
+source /etc/profile.d/rvm.sh
+
+echo "Installing various rubies"
+rvm install 1.9.2-p180
+rvm --default 1.9.2-p180
+rvm install 1.8.7
+
+# install only rake 0.8.7
+rvm use 1.8.7
+gem install rake --version '0.8.7' --no-rdoc --no-ri
+
+rvm use 1.9.2
+gem install rake --version '0.8.7' --no-rdoc --no-ri
+
+echo "Getting vcap"
+[ -d ~/cloudfoundry ] || mkdir ~/cloudfoundry
+cd ~/cloudfoundry
+
+[ -d vcap ] || git clone $VCAP_REPO
+cd vcap
+git submodule update --init
+gem install vmc --no-rdoc --no-ri
+
+echo "Setting up vcap."
+cd ~/cloudfoundry/vcap
+
+##RUN VCAP SETUP##
+#######################################################################
+
+echo ""
+echo '-----------------------------------------------------------'
+echo "($PLATFORM) Setup for VMware's Cloud Application Platform!"
+echo '-----------------------------------------------------------'
+echo ""
+
+apt-get install -qqy wget curl libcurl3 libcurl3-dev bison build-essential zlib1g-dev libssl-dev libreadline5-dev libxml2 libxml2-dev libxslt1.1 libxslt1-dev git-core sqlite3 libsqlite3-ruby libsqlite3-dev unzip zip ruby-full rake rubygems nginx lsof psmisc librmagick-ruby python-software-properties redis-server rabbitmq-server
+
+add-apt-repository "deb http://archive.canonical.com/ lucid partner"
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys AED4B06F473041FA
+apt-get -qqy update
+echo sun-java6-jdk shared/accepted-sun-dlj-v1-1 boolean true | sudo /usr/bin/debconf-set-selections
+echo sun-java6-jre shared/accepted-sun-dlj-v1-1 boolean true | sudo /usr/bin/debconf-set-selections
+apt-get install -qqy curl sun-java6-bin sun-java6-jre sun-java6-jdk
+
+echo "Creating default directories at /var/vcap"
+
+if [ ! -d '/var/vcap' ]; then
+    mkdir /var/vcap
+    mkdir /var/vcap/sys
+    mkdir /var/vcap/sys/log
+    mkdir /var/vcap/shared
+    mkdir /var/vcap/services
+    chmod -R 777 /var/vcap
+fi
+
+gem install bundler -v 1.0.10 --no-rdoc --no-ri
+
+#######################################################################
+
+MYSQL_PASS="$(cat /dev/urandom | tr -dc _A-Z-a-z-0-9 | head -c10)"
+
+echo "Installing PostgreSQL server and support"
+apt-get install -qqy postgresql libpq-dev
+echo "Installing pg gems"
+gem install pg --no-rdoc --no-ri
+echo ""
+echo "Installing MySQL server and support"
+echo mysql-server-5.1 mysql-server/root_password select $MYSQL_PASS | sudo debconf-set-selections
+echo mysql-server-5.1 mysql-server/root_password_again select $MYSQL_PASS | sudo debconf-set-selections
+apt-get install -qqy mysql-server ruby-dev libmysql-ruby libmysqlclient-dev
+echo "Installing mysql gems"
+gem install mysql --no-rdoc --no-ri
+echo ""
+
+# note: vcap start runs db:migrate on each cloud boot
+# no need to run anything during setup
+
+echo "Setting up Ruby System Gems and Support"
+apt-get install -qqy ruby-dev libmysql-ruby libmysqlclient-dev libpq-dev postgresql-client 
+
+echo "Setting up for support for DEA"
+add-apt-repository "deb http://http.us.debian.org/debian sid main contrib non-free"
+apt-get -qqy update
+apt-get install --force-yes -qqy nodejs erlang || true
+
+echo "Installing some default system gems"
+echo "gem: --no-rdoc --no-ri" > ~/.gemrc
+
+gem install rack thin sinatra eventmachine
+
+if [ ! -d '/var/vcap.local' ]; then
+    echo "Creating directory /var/vcap.local"
+    mkdir "/var/vcap.local"
+    chmod  777 "/var/vcap.local"
+fi
+
+## END VCAP SETUP ##
+#######################################################################
+
+cd ~/cloudfoundry/vcap/services/mysql/config
+sed -i.bkup -e "s/pass: root/pass: $MYSQL_PASS/" mysql_node.yml
+
+echo "Restarting nginx"
+cd ~/cloudfoundry/vcap
+cp setup/simple.nginx.conf /etc/nginx/nginx.conf
+/etc/init.d/nginx restart
+
+echo "Installing bundler"
+cd ~/cloudfoundry/vcap
+gem install bundler --no-rdoc --no-ri
+rake bundler:install
+
+# don't start up vcap in this shell
+# its best to exit the shell and then
+# come back in so that the .rvmrc in cloudfoundry/vcap activates correctly
+
+#Install all bundled gems
+TEMPDIR=`mktemp -d`
+mkdir -p $TEMPDIR
+cd ~/cloudfoundry/vcap
+for DIR in `find ./ -name cache`; do cp $DIR/*.gem $TEMPDIR; done
+cd $TEMPDIR
+for GEM in `ls -1`; do gem install $GEM --no-rdoc --no-ri; done
+
+echo 'Success!'
+
+exit 0;

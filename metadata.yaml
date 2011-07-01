@@ -1,0 +1,8 @@
+ensemble: formula
+name: cloudfoundry-server
+revision: 6
+summary: "Cloud Foundry Server"
+description: |
+    Installs Cloud Foundry Server from VMWare providing the required database,
+    and the relation settings necessary to access it, and completes the
+    configuration of optional services and makes it available.
