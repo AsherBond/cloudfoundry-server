@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+set -eux
 
 # Allow VCAP_REPO to be overriden for testing
 VCAP_REPO=${VCAP_REPO:-https://github.com/cloudfoundry/vcap.git}
@@ -16,7 +16,7 @@ echo '-----------------------------------------------------------'
 echo ""
 
 add-apt-repository "deb http://ppa.launchpad.net/canonical-sig/3rd-party-testing/ubuntu natty main"
-apt-get -qqy update
+apt-get -y update
 apt-get -y install git-core ruby ruby-rvm libsqlite3-dev ruby-full rake rubygems nginx lsof psmisc redis-server ruby1.9.1-full libmysqlclient-dev rubygems1.9.1 mongodb nodejs erlang libxslt1-dev libssl-dev
 
 echo "Activate rvm"
@@ -58,10 +58,10 @@ echo '-----------------------------------------------------------'
 echo ""
 
 add-apt-repository "deb http://archive.canonical.com/ lucid partner"
-apt-get -qqy update
+apt-get -y update
 echo sun-java6-jdk shared/accepted-sun-dlj-v1-1 boolean true | sudo /usr/bin/debconf-set-selections
 echo sun-java6-jre shared/accepted-sun-dlj-v1-1 boolean true | sudo /usr/bin/debconf-set-selections
-apt-get install -qqy curl sun-java6-bin sun-java6-jre sun-java6-jdk
+apt-get install -y curl sun-java6-bin sun-java6-jre sun-java6-jdk
 
 echo "Creating default directories at /var/vcap"
 
@@ -80,7 +80,7 @@ MYSQL_PASS="$(cat /dev/urandom | tr -dc _A-Z-a-z-0-9 | head -c10)"
 #POSTGRESQL_PASS="$(cat /dev/urandom | tr -dc _A-Z-a-z-0-9 | head -c10)"
 
 #echo "Installing PostgreSQL server and support"
-#apt-get install -qqy postgresql libpq-dev
+#apt-get install -y postgresql libpq-dev
 #su - postgres -c "/usr/bin/psql -c \"alter role postgres password '$POSTGRESQL_PASS'\""
 #echo "Installing pg gems"
 #gem install pg --no-rdoc --no-ri
@@ -88,7 +88,7 @@ MYSQL_PASS="$(cat /dev/urandom | tr -dc _A-Z-a-z-0-9 | head -c10)"
 echo "Installing MySQL server and support"
 echo mysql-server-5.1 mysql-server/root_password select $MYSQL_PASS | sudo debconf-set-selections
 echo mysql-server-5.1 mysql-server/root_password_again select $MYSQL_PASS | sudo debconf-set-selections
-apt-get install -qqy mysql-server
+apt-get install -y mysql-server
 
 if [ ! -d '/var/vcap.local' ]; then
     echo "Creating directory /var/vcap.local"
