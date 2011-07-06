@@ -21,6 +21,7 @@ apt-get -y install git-core ruby ruby-rvm libsqlite3-dev ruby-full rake rubygems
 
 echo "Activate rvm"
 HOME="/root"
+source /etc/profile # adding this seems to make it all work on natty. negronjl
 source /etc/rvmrc
 source /etc/profile.d/rvm.sh
 
