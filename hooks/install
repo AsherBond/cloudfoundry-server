@@ -15,27 +15,41 @@ echo "($PLATFORM) One Click Installer for VMware's Cloud Application Platform!"
 echo '-----------------------------------------------------------'
 echo ""
 
-add-apt-repository "deb http://ppa.launchpad.net/canonical-sig/3rd-party-testing/ubuntu natty main"
+add-apt-repository "deb http://ppa.launchpad.net/cloudfoundry/ppa/ubuntu oneiric main"
 apt-get -y update
-apt-get -y install git-core ruby ruby-rvm libsqlite3-dev ruby-full rake rubygems nginx lsof psmisc redis-server ruby1.9.1-full libmysqlclient-dev rubygems1.9.1 nodejs erlang libxslt1-dev libssl-dev
+apt-get -y install git-core ruby ruby-rvm libsqlite3-dev ruby-full rake rubygems nginx lsof psmisc redis-server ruby1.9.1-full libmysqlclient-dev rubygems1.9.1 nodejs erlang libxslt1-dev libssl-dev mongodb libpq-dev
 
-echo "Activate rvm"
-HOME="/root"
-source /etc/profile # adding this seems to make it all work on natty. negronjl
-source /etc/rvmrc
-source /etc/profile.d/rvm.sh
+#Mount EBS volume containing required gemsets and rubies
+#This should be removed for production and ALL other commented
+#lines of code below uncommented
+export EC2_SECRET_KEY=eict9FS4+DOQVfjBrlb4rhPTUNB1x4WWlpgx50gT
+export EC2_URL=https://ec2.amazonaws.com
+export EC2_ACCESS_KEY=AKIAJHAEHXEVAF2UTSKA
 
-echo "Installing various rubies"
-rvm install 1.9.2-p180
-rvm --default 1.9.2-p180
-rvm install 1.8.7
+HOSTNAME=`hostname` euca-attach-volume -i `euca-describe-instances |grep $HOSTNAME |awk -F" " '{print $2}'` -d /dev/sdf vol-03032568
+sleep 10
+mkdir -p /mnt/gems && mount -t ext3 /dev/xvdf1 /mnt/gems
+mkdir -p /var/lib/gems && mount --bind /mnt/gems/gems/ /var/lib/gems
+mount --bind /mnt/gems/ruby-rvm/gems /usr/share/ruby-rvm/gems
+mount --bind /mnt/gems/ruby-rvm/rubies /usr/share/ruby-rvm/rubies
 
-# install only rake 0.8.7
-rvm use 1.8.7
-gem install rake --version '0.8.7' --no-rdoc --no-ri
+#echo "Activate rvm"
+#HOME="/root"
+#source /etc/rvmrc
+#source /etc/profile
 
-rvm use 1.9.2
-gem install rake --version '0.8.7' --no-rdoc --no-ri
+#This should be done in production, but to save time, we mount a pre-existing copy from an EBS volume
+#echo "Installing various rubies"
+#rvm install 1.9.2-p180
+#rvm --default 1.9.2-p180
+#rvm install 1.8.7
+#
+## install only rake 0.8.7
+#rvm use 1.8.7
+#gem install rake --version '0.8.7' --no-rdoc --no-ri
+#
+#rvm use 1.9.2
+#gem install rake --version '0.8.7' --no-rdoc --no-ri
 
 echo "Getting vcap"
 [ -d $INSTALL_DIR ] || mkdir -p $INSTALL_DIR
@@ -44,7 +58,7 @@ cd $INSTALL_DIR
 [ -d vcap ] || git clone $VCAP_REPO
 cd vcap
 git submodule update --init
-gem install vmc --no-rdoc --no-ri
+#gem install vmc --no-rdoc --no-ri
 
 echo "Setting up vcap."
 cd $INSTALL_DIR/vcap
@@ -118,39 +132,37 @@ gem install bundler --no-rdoc --no-ri
 rake bundler:install
 
 #Install all bundled gems
-TEMPDIR=`mktemp -d`
-cd $INSTALL_DIR/vcap
-for GEM in `find ./ -name *.gem |sed -e '/^\.\/tests/d' -e '/rabbit/d'`; do cp $GEM $TEMPDIR; done
-#remove any versions of rake that may break the db setup
-rm -f $TEMPDIR/rake-*.gem
-#remove postgres gem as we aren't utlizing it right now
-rm -f TEMPDIR/pg-*.gem
-cd $TEMPDIR
-#install all gems for RVM installed ruby 1.9.2
-for GEM in `ls -1`; do
-    gem install $GEM --no-rdoc --no-ri;
-done
-#Unload rvm, but create cloud_controller db structure first
-rvm reset
-#install all gems for sytem rubies as they will be used by the DEAs
-for GEM in `ls -1`; do
-    /usr/bin/gem1.8 install $GEM --no-rdoc --no-ri;
-    /usr/bin/gem1.9.1 install $GEM --no-rdoc --no-ri;
-done
-#cleanup gem cache
-cd && rm -rf $TEMPDIR
+#TEMPDIR=`mktemp -d`
+#cd $INSTALL_DIR/vcap
+#for GEM in `find ./ -name *.gem |sed -e '/^\.\/tests/d' -e '/rabbit/d'`; do cp $GEM $TEMPDIR; done
+##remove any versions of rake that may break the db setup
+#rm -f $TEMPDIR/rake-*.gem
+#cd $TEMPDIR
+##install all gems for RVM installed ruby 1.9.2
+#for GEM in `ls -1`; do
+#    gem install $GEM --no-rdoc --no-ri;
+#done
+##Unload rvm, but create cloud_controller db structure first
+#rvm reset
+##install all gems for sytem rubies as they will be used by the DEAs
+#for GEM in `ls -1`; do
+#    /usr/bin/gem1.8 install $GEM --no-rdoc --no-ri;
+#    /usr/bin/gem1.9.1 install $GEM --no-rdoc --no-ri;
+#done
+##cleanup gem cache
+#cd && rm -rf $TEMPDIR
 
 #Remove any version of rake >= 0.9 as it causes issues with cc/hm
-for RUBY in ruby-1.8.7-p334 ruby-1.8.7-p334@global ruby-1.9.2-p180 ruby-1.9.2-p180@global; do
-    rvm use $RUBY
-    gem uninstall rake -x --version=0.9.1 || true
-    gem uninstall rake -x --version=0.9.2 || true
-done
+#for RUBY in ruby-1.8.7-p334 ruby-1.8.7-p334@global ruby-1.9.2-p180 ruby-1.9.2-p180@global; do
+#    rvm use $RUBY
+#    gem uninstall rake -x --version=0.9.1 || true
+#    gem uninstall rake -x --version=0.9.2 || true
+#done
 
-/usr/bin/gem1.8 uninstall rake -x --version=0.9.1 || true
-/usr/bin/gem1.8 uninstall rake -x --version=0.9.2 || true
-/usr/bin/gem1.9.1 uninstall rake -x --version=0.9.1 || true
-/usr/bin/gem1.9.1 uninstall rake -x --version=0.9.2 || true
+#/usr/bin/gem1.8 uninstall rake -x --version=0.9.1 || true
+#/usr/bin/gem1.8 uninstall rake -x --version=0.9.2 || true
+#/usr/bin/gem1.9.1 uninstall rake -x --version=0.9.1 || true
+#/usr/bin/gem1.9.1 uninstall rake -x --version=0.9.2 || true
 
 #Modify DEA config to set proper paths for executables
 cd $INSTALL_DIR/vcap/dea/config
