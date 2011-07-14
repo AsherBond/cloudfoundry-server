@@ -1,8 +1,8 @@
 #!/bin/bash
 
 INSTALL_DIR='/opt/cloudfoundry-server'
-source /etc/rvmrc
-source /etc/profile
+#source /etc/rvmrc
+#source /etc/profile
 export rvm_trust_rvmrcs_flag=1
 cd $INSTALL_DIR/vcap
 export HOME=/root
