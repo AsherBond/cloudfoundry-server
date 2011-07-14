@@ -6,3 +6,6 @@ description: |
     Installs Cloud Foundry Server from VMWare providing the required database,
     and the relation settings necessary to access it, and completes the
     configuration of optional services and makes it available.
+  requires:
+    db-admin:
+      interface: mysql
