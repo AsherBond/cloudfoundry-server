@@ -1,6 +1,11 @@
 #!/bin/bash
-export rvm_trust_rvmrcs_flag=1 # Trust all rmvrcs we find
+
+INSTALL_DIR='/opt/cloudfoundry-server'
 source /etc/rvmrc
 source /etc/profile
-
-cd /opt/cloudfoundry-server/vcap && ./bin/vcap stop
+export rvm_trust_rvmrcs_flag=1
+cd $INSTALL_DIR/vcap
+export HOME=/root
+export PATH=$PATH:/var/lib/gems/1.9.1/bin
+#rake db:migrate
+bin/vcap stop
