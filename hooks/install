@@ -9,7 +9,7 @@ VCAP_REPO=${VCAP_REPO:-https://github.com/cloudfoundry/vcap.git}
 INSTALL_DIR='/opt/cloudfoundry-server'
 DYNDNS_USERNAME="iamfuzz"
 DYNDNS_PASSWORD="testing123"
-DYNDNS_HOSTNAME="cloud-foundry.dyndns.org"
+DYNDNS_HOSTNAME="cf-negronjl.dyndns.org"
 
 
 ############################################################################################################
@@ -37,7 +37,8 @@ echo mysql-server-5.1 mysql-server/root_password_again select $MYSQL_PASS | sudo
 apt-get -y install git-core ruby libsqlite3-dev ruby-full rake\
                    rubygems nginx lsof psmisc redis-server ruby1.9.1-full\
                    libmysqlclient-dev rubygems1.9.1 nodejs mysql-server\
-                   libxslt1-dev libssl-dev mongodb libpq-dev curl
+                   libxslt1-dev libssl-dev mongodb libpq-dev curl \
+                   openjdk-6-jre openjdk-6-jdk
 
 
 ############################################################################################################
