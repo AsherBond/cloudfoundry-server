@@ -37,7 +37,7 @@ echo mysql-server-5.1 mysql-server/root_password_again select $MYSQL_PASS | sudo
 apt-get -y install git-core ruby libsqlite3-dev ruby-full rake\
                    rubygems nginx lsof psmisc redis-server ruby1.9.1-full\
                    libmysqlclient-dev rubygems1.9.1 nodejs mysql-server\
-                   libxslt1-dev libssl-dev mongodb libpq-dev curl \
+                   libxslt1-dev libssl-dev mongodb curl \
                    openjdk-6-jre openjdk-6-jdk
 
 
