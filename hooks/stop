@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -ux
+
 INSTALL_DIR='/opt/cloudfoundry-server'
 #source /etc/rvmrc
 #source /etc/profile

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -ux
+
 DB_USER=`relation-get user`
 DB_PASSWORD=`relation-get password`
 DB_HOST=`relation-get host`
