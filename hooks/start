@@ -13,6 +13,8 @@
 #     rake db:migrate
 #     bin/vcap start
 
+set -eux
+
 INSTALL_DIR='/opt/cloudfoundry-server'
 #source /etc/rvmrc
 #source /etc/profile
@@ -22,3 +24,5 @@ export HOME=/root
 export PATH=$PATH:/var/lib/gems/1.9.1/bin
 #rake db:migrate
 bin/vcap start
+
+exit 0

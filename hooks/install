@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ux
+set -eux
 
 ############################################################################################################
 # GLOBAL VARIABLES
@@ -235,5 +235,7 @@ export HOME=/root
 export PATH=$PATH:/var/lib/gems/1.9.1/bin
 rake db:migrate
 # bin/vcap start
+
+exit 0
 
 
