@@ -6,19 +6,13 @@ DB_USER=`relation-get user`
 DB_PASSWORD=`relation-get password`
 DB_HOST=`relation-get host`
 
-ensemble-log "db host ${DB_HOST}"
-
 sed -i.bak -e "s/host:\ .*$/host:\ $DB_HOST/g" \
            -e "s/user:\ .*$/user:\ $DB_USER/g" \
            -e "s/pass:\ .*$/pass:\ $DB_PASSWORD/g" \
     /opt/cloudfoundry-server/vcap/services/mysql/config/mysql_node.yml
 
-INSTALL_DIR='/opt/cloudfoundry-server'
-cd $INSTALL_DIR/vcap
-export HOME=/root
-export PATH=$PATH:/var/lib/gems/1.9.1/bin
 
-bin/vcap restart &
+service cloudfoundry-server restart
 
 # Open MySQL port
 open-port 3306/TCP

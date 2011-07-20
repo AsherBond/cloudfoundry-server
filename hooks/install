@@ -3,245 +3,63 @@
 set -ux
 
 ############################################################################################################
-# GLOBAL VARIABLES
+# Global variables
 ############################################################################################################
-VCAP_REPO=${VCAP_REPO:-https://github.com/cloudfoundry/vcap.git}
-INSTALL_DIR='/opt/cloudfoundry-server'
+MYSQL_ROOT_PASSWORD=`pwgen -N1`
+USE_DYNDNS="true"
 DYNDNS_USERNAME="iamfuzz"
 DYNDNS_PASSWORD="testing123"
 DYNDNS_HOSTNAME="cf-negronjl.dyndns.org"
 
 
 ############################################################################################################
-# mysqlpresetup:
-#   - &mysql_pre_setup |
-#     MYSQL_PASS="$(cat /dev/urandom | tr -dc _A-Z-a-z-0-9 | head -c10)"
-#     echo -n $MYSQL_PASS > /tmp/mysql_pass
-#     echo mysql-server-5.1 mysql-server/root_password select $MYSQL_PASS | sudo debconf-set-selections
-#     echo mysql-server-5.1 mysql-server/root_password_again select $MYSQL_PASS | sudo debconf-set-selections
-
-MYSQL_PASS="$(cat /dev/urandom | tr -dc _A-Z-a-z-0-9 | head -c10)"
-echo -n $MYSQL_PASS > /tmp/mysql_pass
-echo mysql-server-5.1 mysql-server/root_password select $MYSQL_PASS | sudo debconf-set-selections
-echo mysql-server-5.1 mysql-server/root_password_again select $MYSQL_PASS | sudo debconf-set-selections
+# Dependency and utilities packages
+############################################################################################################
+apt-get -y install debconf-utils python-software-properties pwgen facter facter-customfacts-plugin
 
 
 ############################################################################################################
-# installpackages:
-#   - &install_packages |
-#     apt-get -y install git-core ruby libsqlite3-dev ruby-full rake\
-#                        rubygems nginx lsof psmisc redis-server ruby1.9.1-full\
-#                        libmysqlclient-dev rubygems1.9.1 nodejs mysql-server\
-#                        libxslt1-dev libssl-dev mongodb libpq-dev curl
-
-apt-get -y install git-core ruby libsqlite3-dev ruby-full rake\
-                   rubygems nginx lsof psmisc redis-server ruby1.9.1-full\
-                   libmysqlclient-dev rubygems1.9.1 nodejs mysql-server\
-                   libxslt1-dev libssl-dev mongodb curl \
-                   openjdk-6-jre openjdk-6-jdk
+# Add repositories
+############################################################################################################
+apt-add-repository ppa:cloudfoundry/ppa
+apt-get -y update
 
 
 ############################################################################################################
-# updatedyndns:
-#   - &update_dyndns |
-#     API_VERSION="2008-02-01"
-#     METADATA_URL="http://169.254.169.254/$API_VERSION/"
-#     public_ip=$(curl -s "$METADATA_URL"/meta-data/public-ipv4)
-#     response=$(curl -s http://iamfuzz:testing123@members.dyndns.org/nic/update?hostname=cloud-foundry.dyndns.org&myip=$public_ip&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG)
-
-API_VERSION="2008-02-01"
-METADATA_URL="http://169.254.169.254/$API_VERSION/"
-public_ip=$(curl -s "$METADATA_URL"/meta-data/public-ipv4)
-response=$(curl -s http://"${DYNDNS_USERNAME}":"${DYNDNS_PASSWORD}"@members.dyndns.org/nic/update?hostname="${DYNDNS_HOSTNAME}"&myip=$public_ip&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG)
-
-
+# Preseed variables
 ############################################################################################################
-# makedirs:
-#   - &make_dirs |
-#     if [ ! -d '/var/vcap' ]; then
-#         mkdir /var/vcap
-#         mkdir /var/vcap/sys
-#         mkdir /var/vcap/sys/log
-#         mkdir /var/vcap/shared
-#         mkdir /var/vcap/services
-#         chmod -R 777 /var/vcap
-#     fi
-# 
-#     if [ ! -d '/var/vcap.local' ]; then
-#         mkdir "/var/vcap.local"
-#         chmod  777 "/var/vcap.local"
-#     fi
 
-if [ ! -d '/var/vcap' ]; then
-    mkdir /var/vcap
-    mkdir /var/vcap/sys
-    mkdir /var/vcap/sys/log
-    mkdir /var/vcap/shared
-    mkdir /var/vcap/services
-    chmod -R 777 /var/vcap
+# Mysql
+echo debconf mysql-server/root_password password ${MYSQL_ROOT_PASSWORD}| /usr/bin/debconf-set-selections
+echo debconf mysql-server/root_password_again password ${MYSQL_ROOT_PASSWORD}| /usr/bin/debconf-set-selections
+
+# DynDNS
+if [ "${USE_DYNDNS}" == "true" ];then
+   echo debconf cloudfoundry-server/use_dyndns boolean ${USE_DYNDNS} | /usr/bin/debconf-set-selections
+   echo debconf cloudfoundry-server/username string ${DYNDNS_USERNAME} | /usr/bin/debconf-set-selections
+   echo debconf cloudfoundry-server/password password ${DYNDNS_PASSWORD} | /usr/bin/debconf-set-selections
+   echo debconf cloudfoundry-server/hostname string ${DYNDNS_HOSTNAME} | /usr/bin/debconf-set-selections
 fi
 
-if [ ! -d '/var/vcap.local' ]; then
-    mkdir "/var/vcap.local"
-    chmod  777 "/var/vcap.local"
-fi
+fact-add mysql-root-password ${MYSQL_ROOT_PASSWORD}
+fact-add use-dyndns ${USE_DYNDNS}
+fact-add dyndns-username ${DYNDNS_USERNAME}
+fact-add dyndns-password ${DYNDNS_PASSWORD}
 
 
 ############################################################################################################
-# switchrubies:
-#   - &switch_rubies |
-#     rm -f /usr/bin/ruby /usr/bin/gem
-#     ln -s /usr/bin/gem1.9.1 /usr/bin/gem
-#     ln -s /usr/bin/ruby1.9.1 /usr/bin/ruby
+# Install CloudFoundry package
+############################################################################################################
 
-rm -f /usr/bin/ruby /usr/bin/gem
-ln -s /usr/bin/gem1.9.1 /usr/bin/gem
-ln -s /usr/bin/ruby1.9.1 /usr/bin/ruby
+apt-get -y install cloudfoundry-server
 
 
 ############################################################################################################
-# installvcap:
-#   - &install_vcap |
-#     VCAP_REPO=${VCAP_REPO:-https://github.com/cloudfoundry/vcap.git}
-#     INSTALL_DIR='/opt/cloudfoundry-server'
-# 
-#     [ -d $INSTALL_DIR ] || mkdir -p $INSTALL_DIR
-#     cd $INSTALL_DIR
-# 
-#     [ -d vcap ] || git clone $VCAP_REPO
-#     cd vcap
-#     git submodule update --init
-
-[ -d $INSTALL_DIR ] || mkdir -p $INSTALL_DIR
-cd $INSTALL_DIR
-
-[ -d vcap ] || git clone $VCAP_REPO
-cd vcap
-git submodule update --init
-
-
+# Open the necessary firewall/ACL ports
 ############################################################################################################
-# updateruntimes:
-#   - &update_runtimes |
-#     INSTALL_DIR='/opt/cloudfoundry-server'
-#     cd $INSTALL_DIR/vcap/cloud_controller/staging/manifests
-#     sed -i.bak 's#executable:\ "/usr/bin/ruby"#executable:\ "/usr/bin/ruby1\.8"#g' sinatra.yml
-#     sed -i.bak 's#executable:\ "/usr/bin/ruby"#executable:\ "/usr/bin/ruby1\.8"#g' rails3.yml
-
-cd $INSTALL_DIR/vcap/cloud_controller/staging/manifests
-sed -i.bak 's#executable:\ "/usr/bin/ruby"#executable:\ "/usr/bin/ruby1\.8"#g' sinatra.yml
-sed -i.bak 's#executable:\ "/usr/bin/ruby"#executable:\ "/usr/bin/ruby1\.8"#g' rails3.yml
-
-
-############################################################################################################
-# setupdeaconfig:
-#   - &setup_dea_config |
-#     INSTALL_DIR='/opt/cloudfoundry-server'
-#     cd $INSTALL_DIR/vcap/dea/config
-#     sed -i.bak -e 's#executable:\ /usr/bin/ruby#executable:\ /usr/bin/ruby1\.8#g'\
-#                -e 's#executable:\ ruby#executable:\ /usr/bin/ruby1\.9#g'\
-#                -e 's#executable:\ /var/vcap/runtimes/erlang-R14B02/bin/erl#executable:\ erlang#g'\
-#                dea.yml
-#     sed -i.bak -e 's#executable:\ /usr/bin/ruby#executable:\ /usr/bin/ruby1\.8#g'\
-#                -e 's#executable:\ ruby#executable:\ /usr/bin/ruby1\.9#g'\
-#                dea2.yml
-
-cd $INSTALL_DIR/vcap/dea/config
-sed -i.bak -e 's#executable:\ /usr/bin/ruby#executable:\ /usr/bin/ruby1\.8#g'\
-           -e 's#executable:\ ruby#executable:\ /usr/bin/ruby1\.9#g'\
-           -e 's#executable:\ /var/vcap/runtimes/erlang-R14B02/bin/erl#executable:\ erlang#g'\
-            dea.yml
-sed -i.bak -e 's#executable:\ /usr/bin/ruby#executable:\ /usr/bin/ruby1\.8#g'\
-           -e 's#executable:\ ruby#executable:\ /usr/bin/ruby1\.9#g'\
-            dea2.yml
-
-
-############################################################################################################
-# setupmysql:
-#   - &setup_mysql |
-#     INSTALL_DIR='/opt/cloudfoundry-server'
-#     cd $INSTALL_DIR/vcap/services/mysql/config
-#     MYSQL_PASS=`cat /tmp/mysql_pass`
-#     rm -f /tmp/mysql_pass
-#     sed -i.bak -e "s/pass: root/pass: $MYSQL_PASS/" mysql_node.yml
-
-cd $INSTALL_DIR/vcap/services/mysql/config
-MYSQL_PASS=`cat /tmp/mysql_pass`
-rm -f /tmp/mysql_pass
-sed -i.bak -e "s/pass: root/pass: $MYSQL_PASS/" mysql_node.yml
-
-
-############################################################################################################
-# setuphostname:
-#   - &setup_hostname |
-#     INSTALL_DIR='/opt/cloudfoundry-server'
-#     cd $INSTALL_DIR/vcap/cloud_controller/config
-#     sed -i.bak -e "s/^external_uri:.*/external_uri:\ api.cloud-foundry.dyndns.org/g" cloud_controller.yml
-
-cd $INSTALL_DIR/vcap/cloud_controller/config
-sed -i.bak -e "s/^external_uri:.*/external_uri:\ api.${DYNDNS_HOSTNAME}/g" cloud_controller.yml
-
-
-############################################################################################################
-# setupnginx:
-#   - &setup_nginx |
-#     INSTALL_DIR='/opt/cloudfoundry-server'
-#     cd $INSTALL_DIR/vcap
-#     cp setup/simple.nginx.conf /etc/nginx/nginx.conf
-#     /etc/init.d/nginx restart
-
-cd $INSTALL_DIR/vcap
-cp setup/simple.nginx.conf /etc/nginx/nginx.conf
-/etc/init.d/nginx restart
-
-
-############################################################################################################
-# runbundler:
-#   - &run_bundler |
-#     gem install bundler
-#     export HOME=/root
-#     export GEM_HOME=/var/lib/gems/1.9.1
-#     export PATH=$PATH:/var/lib/gems/1.9.1/bin
-#     INSTALL_DIR='/opt/cloudfoundry-server'
-#     cd $INSTALL_DIR/vcap
-#     rake bundler:install
-
-gem install bundler
-export HOME=/root
-export GEM_HOME=/var/lib/gems/1.9.1
-export PATH=$PATH:/var/lib/gems/1.9.1/bin
-cd $INSTALL_DIR/vcap
-rake bundler:install
-
-############################################################################################################
-# startvcap:
-#   - &start_vcap |
-#     INSTALL_DIR='/opt/cloudfoundry-server'
-#     source /etc/rvmrc
-#     source /etc/profile
-#     export rvm_trust_rvmrcs_flag=1
-#     cd $INSTALL_DIR/vcap
-#     export HOME=/root
-#     export PATH=$PATH:/var/lib/gems/1.9.1/bin
-#     rake db:migrate
-#     bin/vcap start
-
-INSTALL_DIR='/opt/cloudfoundry-server'
-#source /etc/rvmrc
-#source /etc/profile
-export rvm_trust_rvmrcs_flag=1
-cd $INSTALL_DIR/vcap
-export HOME=/root
-export PATH=$PATH:/var/lib/gems/1.9.1/bin
-rake db:migrate
-# bin/vcap start
-
-# Open the necessary ports
-if [ -x `which open-port` ]; then
+if [ -x /usr/bin/open-port ]; then
    open-port 80/TCP
    open-port 443/TCP
 fi
 
 exit 0
-
-
