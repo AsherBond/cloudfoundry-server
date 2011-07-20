@@ -3,6 +3,12 @@
 set -ux
 
 ############################################################################################################
+# Dependency and utilities packages
+############################################################################################################
+apt-get -y install debconf-utils python-software-properties pwgen facter facter-customfacts-plugin
+
+
+############################################################################################################
 # Global variables
 ############################################################################################################
 MYSQL_ROOT_PASSWORD=`pwgen -N1`
@@ -10,12 +16,6 @@ USE_DYNDNS="true"
 DYNDNS_USERNAME="iamfuzz"
 DYNDNS_PASSWORD="testing123"
 DYNDNS_HOSTNAME="cf-negronjl.dyndns.org"
-
-
-############################################################################################################
-# Dependency and utilities packages
-############################################################################################################
-apt-get -y install debconf-utils python-software-properties pwgen facter facter-customfacts-plugin
 
 
 ############################################################################################################
@@ -32,6 +32,9 @@ apt-get -y update
 # Mysql
 echo debconf mysql-server/root_password password ${MYSQL_ROOT_PASSWORD}| /usr/bin/debconf-set-selections
 echo debconf mysql-server/root_password_again password ${MYSQL_ROOT_PASSWORD}| /usr/bin/debconf-set-selections
+
+# Postfix
+echo debconf postfix/main_mailer_type select No configuration | /usr/bin/debconf-set-selections
 
 # DynDNS
 if [ "${USE_DYNDNS}" == "true" ];then
