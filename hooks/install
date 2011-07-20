@@ -236,6 +236,12 @@ export PATH=$PATH:/var/lib/gems/1.9.1/bin
 rake db:migrate
 # bin/vcap start
 
+# Open the necessary ports
+if [ -x `which open-port` ]; then
+   open-port 80/TCP
+   open-port 443/TCP
+fi
+
 exit 0
 
 
