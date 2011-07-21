@@ -1,11 +1,15 @@
 ensemble: formula
 name: cloudfoundry-server
-revision: 18
+revision: 19
 summary: "Cloud Foundry Server"
 description: |
    Installs Cloud Foundry Server from VMWare providing the required database,
    and the relation settings necessary to access it, and completes the
    configuration of optional services and makes it available.
 requires:
-  db-admin:
+  mysql-admin:
     interface: mysql
+  mongodb-admin:
+    interface: mongodb
+  redis-admin:
+    interface: redis

@@ -1,0 +1,30 @@
+#!/bin/bash
+
+set -ux
+
+############################################################################################################
+# The relationship is broken so, re-establish the connection to the local MySQL db
+############################################################################################################
+
+DB_USER="root"
+DB_PASSWORD=`facter mysql-root-password`
+DB_HOST="127.0.0.1"
+
+
+############################################################################################################
+# Update the MySQL configuration and restart CloudFoundry ( so it can _see_ the new configuration )
+############################################################################################################
+
+sed -e "s/host:\ .*$/host:\ $DB_HOST/g" \
+    -e "s/user:\ .*$/user:\ $DB_USER/g" \
+    -e "s/pass:\ .*$/pass:\ $DB_PASSWORD/g" \
+    /etc/dotdee/opt/cloudfoundry-server/vcap/services/mysql/config/mysql_node.yml.d/60-serverinfo
+
+dotdee --update /opt/cloudfoundry-server/vcap/services/mysql/config/mysql_node.yml
+
+service cloudfoundry-server restart
+
+# Open MySQL port
+[ -x /usr/bin/open-port ] && open-port 3306/TCP
+
+exit 0
