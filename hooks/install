@@ -42,6 +42,10 @@ if [ "${USE_DYNDNS}" == "true" ];then
    echo debconf cloudfoundry-server/username string ${DYNDNS_USERNAME} | /usr/bin/debconf-set-selections
    echo debconf cloudfoundry-server/password password ${DYNDNS_PASSWORD} | /usr/bin/debconf-set-selections
    echo debconf cloudfoundry-server/hostname string ${DYNDNS_HOSTNAME} | /usr/bin/debconf-set-selections
+   API_VERSION="2008-02-01"
+   METADATA_URL="http://169.254.169.254/$API_VERSION/"
+   public_ip=$(curl -s "$METADATA_URL"/meta-data/public-ipv4)
+   response=$(curl -s http://"${DYNDNS_USERNAME}":"${DYNDNS_PASSWORD}"@members.dyndns.org/nic/update?hostname="${DYNDNS_HOSTNAME}"&myip=$public_ip&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG)
 fi
 
 fact-add mysql-root-password ${MYSQL_ROOT_PASSWORD}
