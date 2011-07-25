@@ -5,7 +5,7 @@ set -ux
 ############################################################################################################
 # Dependency and utilities packages
 ############################################################################################################
-apt-get -y install debconf-utils python-software-properties pwgen facter facter-customfacts-plugin curl
+DEBIAN_FRONTEND=noninteractive apt-get -y install debconf-utils python-software-properties pwgen facter facter-customfacts-plugin curl
 
 
 ############################################################################################################
@@ -58,7 +58,7 @@ fact-add dyndns-password ${DYNDNS_PASSWORD}
 # Install CloudFoundry package
 ############################################################################################################
 
-apt-get -y install cloudfoundry-server
+DEBIAN_FRONTEND=noninteractive apt-get -y install cloudfoundry-server
 
 
 ############################################################################################################
