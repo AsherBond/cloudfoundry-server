@@ -1,11 +1,13 @@
 #!/bin/bash
 
-set -ux
+set -x
+
 
 ############################################################################################################
-# Update the machine to the latest code
+# Set the language
 ############################################################################################################
-#DEBIAN_FRONTEND=noninteractive apt-get -y dist-upgrade
+LANG=en_US.UTF-8
+
 
 ############################################################################################################
 # Dependency and utilities packages
@@ -20,8 +22,7 @@ MYSQL_ROOT_PASSWORD=`pwgen -N1`
 USE_DYNDNS="true"
 DYNDNS_USERNAME="iamfuzz"
 DYNDNS_PASSWORD="testing123"
-DYNDNS_HOSTNAME="cf-negronjl.dyndns.org"
-
+DYNDNS_HOSTNAME="cf-negronjl.dyndns.org" 
 
 ############################################################################################################
 # Add repositories
@@ -71,8 +72,8 @@ fact-add dyndns-password ${DYNDNS_PASSWORD}
 # Install CloudFoundry package
 ############################################################################################################
 
+DEBIAN_FRONTEND=noninteractive apt-get -y install ruby-bundler
 DEBIAN_FRONTEND=noninteractive apt-get -y install cloudfoundry-server
-
 
 ############################################################################################################
 # Open the necessary firewall/ACL ports
