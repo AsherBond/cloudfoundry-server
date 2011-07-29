@@ -33,10 +33,10 @@ DB_HOST=`relation-get host`
 # Update the MySQL configuration and restart CloudFoundry ( so it can _see_ the new configuration )
 ############################################################################################################
 
-sed -i.bak -e "s/host:\ .*$/host:\ $DB_HOST/g" \
-           -e "s/user:\ .*$/user:\ $DB_USER/g" \
-           -e "s/pass:\ .*$/pass:\ $DB_PASSWORD/g" \
-    /etc/dotdee/opt/cloudfoundry-server/vcap/services/mysql/config/mysql_node.yml.d/60-serverinfo
+sed -i -e "s/host:\ .*$/host:\ $DB_HOST/g" \
+       -e "s/user:\ .*$/user:\ $DB_USER/g" \
+       -e "s/pass:\ .*$/pass:\ $DB_PASSWORD/g" \
+       /etc/dotdee/opt/cloudfoundry-server/vcap/services/mysql/config/mysql_node.yml.d/60-serverinfo
 
 dotdee --update /opt/cloudfoundry-server/vcap/services/mysql/config/mysql_node.yml
 

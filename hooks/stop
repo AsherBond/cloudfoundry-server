@@ -4,7 +4,7 @@ set -ux
 
 SERVICE_NAME="cloudfoundry-server"
 
-service ${SERVICE_NAME} stop
+service ${SERVICE_NAME} stop 
 
 
 exit 0
