@@ -25,6 +25,6 @@ dotdee --update /opt/cloudfoundry-server/vcap/services/mysql/config/mysql_node.y
 service cloudfoundry-server restart
 
 # Open MySQL port
-[ -x /usr/bin/open-port ] && open-port 3306/TCP
+[ -x /usr/bin/close-port ] && close-port 3306/TCP
 
 exit 0
