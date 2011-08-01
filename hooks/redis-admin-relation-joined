@@ -7,25 +7,25 @@
 set -ux
 
 ############################################################################################################
-# Get the remote mongodb or exit normally if not found
+# Get the remote redis or exit normally if not found
 ############################################################################################################
 
-REMOTE_MONGODB_HOSTNAME=`relation-get hostname`
-[ -z ${REMOTE_MONGODB_HOSTNAME} ] && exit 0
+REMOTE_REDIS_HOSTNAME=`relation-get hostname`
+[ -z ${REMOTE_REDIS_HOSTNAME} ] && exit 0
 
 ############################################################################################################
-# Save the value of the mongodb hostname as this is going to be needed to reverse the changes if/when
-#  we need to do such a thing. 
+# Save the value of the redis hostname as this is going to be needed to reverse the changes if/when
+#  we need to do such a thing.
 ############################################################################################################
 
-fact-add mongodb_hostname ${REMOTE_MONGODB_HOSTNAME}
+fact-add redis_hostname ${REMOTE_REDIS_HOSTNAME}
 
 ############################################################################################################
-# VMWare hardcoded localhost on their code so, let's change that to our new mongodb server
+# VMWare hardcoded localhost on their code so, let's change that to our new redis server
 ############################################################################################################
 
-sed -i -e "s/localhost/${REMOTE_MONGODB_HOSTNAME}/" /opt/cloudfoundry-server/vcap/services/mongodb/lib/mongodb_service/mongodb_node.rb
-find /opt/cloudfoundry-server/vcap/services/mongodb/spec -type f -exec sed -i -e "s/localhost/${REMOTE_MONGODB_HOSTNAME}/" {} \;
+sed i -e "s/127.0.0.1/${REMOTE_REDIS_HOSTNAME}/" /opt/cloudfoundry-server/vcap/services/redis/spec/node_spec.rb
+
 
 ############################################################################################################
 # Restart CloudFoundry server so the new settings take effect.
@@ -33,6 +33,6 @@ find /opt/cloudfoundry-server/vcap/services/mongodb/spec -type f -exec sed -i -e
 
 service cloudfoundry-server restart
 
-# Open mongodb port
-[ -x /usr/bin/open-port ] && open-port 27017/TCP
+# Open redis port
+[ -x /usr/bin/open-port ] && open-port 6379/TCP
 
