@@ -2,6 +2,13 @@
 
 set -ux
 
+# Fixing what I hope is a temporary issue in the latest oneiric
+[ -d /var/cache/debconf ] || mkdir -p /var/cache/debconf
+[ -e /var/cache/debconf/config.dat ] || touch /var/cache/debconf/config.dat
+apt-get update
+apt-get -y dist-upgrade
+
+
 
 ############################################################################################################
 # Set the language
