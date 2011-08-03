@@ -18,9 +18,7 @@ DB_HOST="127.0.0.1"
 sed -i -e "s/host:\ .*$/host:\ $DB_HOST/g" \
        -e "s/user:\ .*$/user:\ $DB_USER/g" \
        -e "s/pass:\ .*$/pass:\ $DB_PASSWORD/g" \
-       /etc/dotdee/opt/cloudfoundry-server/vcap/services/mysql/config/mysql_node.yml.d/60-serverinfo
-
-dotdee --update /opt/cloudfoundry-server/vcap/services/mysql/config/mysql_node.yml
+       /opt/cloudfoundry-server/vcap/services/mysql/config/mysql_node.yml
 
 service cloudfoundry-server restart
 

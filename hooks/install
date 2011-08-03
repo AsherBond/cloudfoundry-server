@@ -29,7 +29,7 @@ MYSQL_ROOT_PASSWORD=`pwgen -N1`
 USE_DYNDNS="true"
 DYNDNS_USERNAME="iamfuzz"
 DYNDNS_PASSWORD="testing123"
-DYNDNS_HOSTNAME="cf-negronjl.dyndns.org" 
+DYNDNS_HOSTNAME="cloud-foundry.dyndns.org"
 
 ############################################################################################################
 # Add repositories
@@ -39,8 +39,8 @@ DYNDNS_HOSTNAME="cf-negronjl.dyndns.org"
 # around the issue. ( Bug 816169 in launchpad.net )
 # LP: 816169
 rm -f /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
-echo deb http://ppa.launchpad.net/cloudfoundry/ppa/ubuntu oneiric main  >> /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
-echo deb-src http://ppa.launchpad.net/cloudfoundry/ppa/ubuntu oneiric main  >> /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
+echo deb http://ppa.launchpad.net/cloudfoundry/testing/ubuntu oneiric main  >> /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
+echo deb-src http://ppa.launchpad.net/cloudfoundry/testing/ubuntu oneiric main  >> /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E9F24FECE9E376B3B981F0FC8E42119F7BC0B676
 # apt-add-repository ppa:cloudfoundry/ppa
 apt-get -y update
@@ -79,7 +79,7 @@ fact-add dyndns-password ${DYNDNS_PASSWORD}
 # Install CloudFoundry package
 ############################################################################################################
 
-DEBIAN_FRONTEND=noninteractive apt-get -y install ruby-bundler
+DEBIAN_FRONTEND=noninteractive apt-get -y install ruby1.9.1-full=1.9.2.180-3ppa2
 DEBIAN_FRONTEND=noninteractive apt-get -y install cloudfoundry-server
 
 
