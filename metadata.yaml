@@ -1,6 +1,6 @@
 ensemble: formula
 name: cloudfoundry-server
-revision: 22
+revision: 23
 summary: "Cloud Foundry Server"
 description: |
    Installs Cloud Foundry Server from VMWare providing the required database,

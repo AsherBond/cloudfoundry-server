@@ -89,6 +89,7 @@ DEBIAN_FRONTEND=noninteractive apt-get -y install cloudfoundry-server
 ############################################################################################################
 
 service cloudfoundry stop
+cd /opt/cloudfoundry-server/vcap && HOME=/root rake db:migrate && cd -
 
 
 ############################################################################################################
