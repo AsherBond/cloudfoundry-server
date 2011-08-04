@@ -39,8 +39,8 @@ DYNDNS_HOSTNAME="cloud-foundry.dyndns.org"
 # around the issue. ( Bug 816169 in launchpad.net )
 # LP: 816169
 rm -f /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
-echo deb http://ppa.launchpad.net/cloudfoundry/testing/ubuntu oneiric main  >> /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
-echo deb-src http://ppa.launchpad.net/cloudfoundry/testing/ubuntu oneiric main  >> /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
+echo deb http://ppa.launchpad.net/cloudfoundry/ppa/ubuntu oneiric main  >> /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
+echo deb-src http://ppa.launchpad.net/cloudfoundry/ppa/ubuntu oneiric main  >> /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E9F24FECE9E376B3B981F0FC8E42119F7BC0B676
 # apt-add-repository ppa:cloudfoundry/ppa
 apt-get -y update
@@ -62,7 +62,7 @@ if [ "${USE_DYNDNS}" = "true" ];then
    echo debconf cloudfoundry-server/use_dyndns boolean ${USE_DYNDNS} | /usr/bin/debconf-set-selections
    echo debconf cloudfoundry-server/username string ${DYNDNS_USERNAME} | /usr/bin/debconf-set-selections
    echo debconf cloudfoundry-server/password password ${DYNDNS_PASSWORD} | /usr/bin/debconf-set-selections
-   echo debconf cloudfoundry-server/hostname string ${DYNDNS_HOSTNAME} | /usr/bin/debconf-set-selections
+   echo debconf cloudfoundry-server/hostname string api.${DYNDNS_HOSTNAME} | /usr/bin/debconf-set-selections
    API_VERSION="2008-02-01"
    METADATA_URL="http://169.254.169.254/$API_VERSION/"
    public_ip=$(curl -s "$METADATA_URL"/meta-data/public-ipv4)
