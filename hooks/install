@@ -3,11 +3,10 @@
 set -ux
 
 # Fixing what I hope is a temporary issue in the latest oneiric
-[ -d /var/cache/debconf ] || mkdir -p /var/cache/debconf
-[ -e /var/cache/debconf/config.dat ] || touch /var/cache/debconf/config.dat
-apt-get update
-apt-get -y dist-upgrade
-
+#[ -d /var/cache/debconf ] || mkdir -p /var/cache/debconf
+#[ -e /var/cache/debconf/config.dat ] || touch /var/cache/debconf/config.dat
+#apt-get update
+#apt-get -y dist-upgrade
 
 
 ############################################################################################################
@@ -29,7 +28,8 @@ MYSQL_ROOT_PASSWORD=`pwgen -N1`
 USE_DYNDNS="true"
 DYNDNS_USERNAME="iamfuzz"
 DYNDNS_PASSWORD="testing123"
-DYNDNS_HOSTNAME="cloud-foundry.dyndns.org"
+#DYNDNS_HOSTNAME="cloud-foundry.dyndns.org"
+DYNDNS_HOSTNAME="cf-negronjl.dyndns.org"
 
 ############################################################################################################
 # Add repositories
@@ -82,6 +82,12 @@ fact-add dyndns-password ${DYNDNS_PASSWORD}
 #DEBIAN_FRONTEND=noninteractive apt-get -y install ruby1.9.1-full=1.9.2.180-3ppa2 ruby1.9.1=1.9.2.180-3ppa2 libruby1.9.1-dbg=1.9.2.180-3ppa2 ruby1.9.1-dev=1.9.2.180-3ppa2 ruby1.9.1-examples=1.9.2.180-3ppa2 ri1.9.1=1.9.2.180-3ppa2 libtcltk-ruby1.9.1=1.9.2.180-3ppa2 libruby1.9.1=1.9.2.180-3ppa2
 
 DEBIAN_FRONTEND=noninteractive apt-get -y install cloudfoundry-server
+
+
+############################################################################################################
+# Configure mysql password for cloudfoundry-server
+############################################################################################################
+sed -i -e "s/  pass:.*/  pass: ${MYSQL_ROOT_PASSWORD}/" /opt/cloudfoundry-server/vcap/services/mysql/config/mysql_node.yml
 
 
 ############################################################################################################
