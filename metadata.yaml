@@ -13,3 +13,5 @@ requires:
     interface: mongodb
   redis-admin:
     interface: redis
+  cf-dea:
+    interface: cf-dea

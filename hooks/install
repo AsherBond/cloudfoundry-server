@@ -18,6 +18,12 @@ LANG=en_US.UTF-8
 ############################################################################################################
 # Dependency and utility packages
 ############################################################################################################
+rm -f /etc/apt/sources.list.d/facter-plugins-ppa-oneiric.list
+echo deb http://ppa.launchpad.net/facter-plugins/ppa/ubuntu oneiric main  >> /etc/apt/sources.list.d/facter-plugins-ppa-oneiric.list
+echo deb-src http://ppa.launchpad.net/facter-plugins/ppa/ubuntu oneiric main  >> /etc/apt/sources.list.d/facter-plugins-ppa-oneiric.list
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys B696B50DD8914A9290A4923D6383E098F7D4BE4B
+#apt-add-repository ppa:facter-plugins/ppa
+apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get -y install debconf-utils python-software-properties pwgen facter facter-customfacts-plugin curl
 
 
@@ -34,15 +40,11 @@ DYNDNS_HOSTNAME="cf-negronjl.dyndns.org"
 ############################################################################################################
 # Add repositories
 ############################################################################################################
-# There seems to be a bug in apt-add-repository where it is picking "sid" as the version as opposed to
-# the real one  ( oneiric at the time of this writing ).  Installing the repo and keys manually to work
-# around the issue. ( Bug 816169 in launchpad.net )
-# LP: 816169
 rm -f /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
 echo deb http://ppa.launchpad.net/cloudfoundry/ppa/ubuntu oneiric main  >> /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
 echo deb-src http://ppa.launchpad.net/cloudfoundry/ppa/ubuntu oneiric main  >> /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E9F24FECE9E376B3B981F0FC8E42119F7BC0B676
-# apt-add-repository ppa:cloudfoundry/ppa
+#apt-add-repository ppa:cloudfoundry/ppa
 apt-get -y update
 
 
@@ -78,9 +80,6 @@ fact-add dyndns-password ${DYNDNS_PASSWORD}
 ############################################################################################################
 # Install CloudFoundry package
 ############################################################################################################
-
-#DEBIAN_FRONTEND=noninteractive apt-get -y install ruby1.9.1-full=1.9.2.180-3ppa2 ruby1.9.1=1.9.2.180-3ppa2 libruby1.9.1-dbg=1.9.2.180-3ppa2 ruby1.9.1-dev=1.9.2.180-3ppa2 ruby1.9.1-examples=1.9.2.180-3ppa2 ri1.9.1=1.9.2.180-3ppa2 libtcltk-ruby1.9.1=1.9.2.180-3ppa2 libruby1.9.1=1.9.2.180-3ppa2
-
 DEBIAN_FRONTEND=noninteractive apt-get -y install cloudfoundry-server
 
 
@@ -93,8 +92,7 @@ sed -i -e "s/  pass:.*/  pass: ${MYSQL_ROOT_PASSWORD}/" /opt/cloudfoundry-server
 ############################################################################################################
 # Stop CloudFoundry ( due to LP:810808 )
 ############################################################################################################
-
-service cloudfoundry stop
+service cloudfoundry-server stop
 cd /opt/cloudfoundry-server/vcap && HOME=/root rake db:migrate && cd -
 
 
