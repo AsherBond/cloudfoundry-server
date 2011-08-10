@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -ux
+
+relation-set cf-server=`facter ipaddress`
