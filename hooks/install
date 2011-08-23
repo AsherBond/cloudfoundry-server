@@ -36,13 +36,14 @@ DYNDNS_USERNAME="iamfuzz"
 DYNDNS_PASSWORD="testing123"
 #DYNDNS_HOSTNAME="cloud-foundry.dyndns.org"
 DYNDNS_HOSTNAME="cf-negronjl.dyndns.org"
+CF_SERVER_IP=`facter ipaddress`
 
 ############################################################################################################
 # Add repositories
 ############################################################################################################
-rm -f /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
-echo deb http://ppa.launchpad.net/cloudfoundry/ppa/ubuntu oneiric main  >> /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
-echo deb-src http://ppa.launchpad.net/cloudfoundry/ppa/ubuntu oneiric main  >> /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
+rm -f /etc/apt/sources.list.d/cloudfoundry-testing-oneiric.list
+echo deb http://ppa.launchpad.net/cloudfoundry/testing/ubuntu oneiric main  >> /etc/apt/sources.list.d/cloudfoundry-testing-oneiric.list
+echo deb-src http://ppa.launchpad.net/cloudfoundry/testing/ubuntu oneiric main  >> /etc/apt/sources.list.d/cloudfoundry-testing-oneiric.list
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E9F24FECE9E376B3B981F0FC8E42119F7BC0B676
 #apt-add-repository ppa:cloudfoundry/ppa
 apt-get -y update
@@ -61,15 +62,17 @@ echo debconf postfix/main_mailer_type select No configuration | /usr/bin/debconf
 
 # DynDNS
 if [ "${USE_DYNDNS}" = "true" ];then
-   echo debconf cloudfoundry-server/use_dyndns boolean ${USE_DYNDNS} | /usr/bin/debconf-set-selections
-   echo debconf cloudfoundry-server/username string ${DYNDNS_USERNAME} | /usr/bin/debconf-set-selections
-   echo debconf cloudfoundry-server/password password ${DYNDNS_PASSWORD} | /usr/bin/debconf-set-selections
-   echo debconf cloudfoundry-server/hostname string api.${DYNDNS_HOSTNAME} | /usr/bin/debconf-set-selections
    API_VERSION="2008-02-01"
    METADATA_URL="http://169.254.169.254/$API_VERSION/"
    public_ip=$(curl -s "$METADATA_URL"/meta-data/public-ipv4)
    response=$(curl -s http://"${DYNDNS_USERNAME}":"${DYNDNS_PASSWORD}"@members.dyndns.org/nic/update?hostname="${DYNDNS_HOSTNAME}"&myip=$public_ip&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG)
 fi
+
+# CloudFoundry
+echo debconf cloudfoundry-server/use_dyndns boolean ${USE_DYNDNS} | /usr/bin/debconf-set-selections
+echo debconf cloudfoundry-server/hostname string api.${DYNDNS_HOSTNAME} | /usr/bin/debconf-set-selections
+echo debconf cloudfoundry-server-dea/ip string ${CF_SERVER_IP} | /usr/bin/debconf-set-selections
+echo debconf cloudfoundry-server/ip string ${CF_SERVER_IP} | /usr/bin/debconf-set-selections
 
 fact-add mysql-root-password ${MYSQL_ROOT_PASSWORD}
 fact-add use-dyndns ${USE_DYNDNS}
