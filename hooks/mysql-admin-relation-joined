@@ -14,33 +14,3 @@ LOCAL_HOSTNAME=`facter fqdn`
 
 relation-set host="${LOCAL_HOSTNAME}" user="${MYSQL_CF_ADMIN_USER}" password="${MYSQL_CF_ADMIN_PASSWORD}"
 
-
-############################################################################################################
-# Try to collect the credentials from the _other_ side.
-#  exit 0 if not.  Ensemble should try again.
-############################################################################################################
-
-DB_USER=`relation-get user`
-DB_PASSWORD=`relation-get password`
-DB_HOST=`relation-get host`
-
-[ -z ${DB_USER} ] && exit 0
-[ -z ${DB_PASSWORD} ] && exit 0
-[ -z ${DB_HOST} ] && exit 0
-
-
-############################################################################################################
-# Update the MySQL configuration and restart CloudFoundry ( so it can _see_ the new configuration )
-############################################################################################################
-
-sed -i -e "s/host:\ .*$/host:\ $DB_HOST/g" \
-       -e "s/user:\ .*$/user:\ $DB_USER/g" \
-       -e "s/pass:\ .*$/pass:\ $DB_PASSWORD/g" \
-       /opt/cloudfoundry-server/vcap/services/mysql/config/mysql_node.yml
-
-service cloudfoundry-server restart
-
-# Open MySQL port
-[ -x /usr/bin/open-port ] && open-port 3306/TCP
-
-exit 0
