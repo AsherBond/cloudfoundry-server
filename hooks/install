@@ -1,12 +1,9 @@
 #!/bin/bash
 
+############################################################################################################
+# Debugging information
+############################################################################################################
 set -ux
-
-# Fixing what I hope is a temporary issue in the latest oneiric
-#[ -d /var/cache/debconf ] || mkdir -p /var/cache/debconf
-#[ -e /var/cache/debconf/config.dat ] || touch /var/cache/debconf/config.dat
-#apt-get update
-#apt-get -y dist-upgrade
 
 
 ############################################################################################################
@@ -18,11 +15,7 @@ LANG=en_US.UTF-8
 ############################################################################################################
 # Dependency and utility packages
 ############################################################################################################
-rm -f /etc/apt/sources.list.d/facter-plugins-ppa-oneiric.list
-echo deb http://ppa.launchpad.net/facter-plugins/ppa/ubuntu oneiric main  >> /etc/apt/sources.list.d/facter-plugins-ppa-oneiric.list
-echo deb-src http://ppa.launchpad.net/facter-plugins/ppa/ubuntu oneiric main  >> /etc/apt/sources.list.d/facter-plugins-ppa-oneiric.list
-apt-key adv --keyserver keyserver.ubuntu.com --recv-keys B696B50DD8914A9290A4923D6383E098F7D4BE4B
-#apt-add-repository ppa:facter-plugins/ppa
+apt-add-repository ppa:facter-plugins/ppa
 apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get -y install debconf-utils python-software-properties pwgen facter facter-customfacts-plugin curl
 
@@ -30,22 +23,28 @@ DEBIAN_FRONTEND=noninteractive apt-get -y install debconf-utils python-software-
 ############################################################################################################
 # Global variables
 ############################################################################################################
+# MySQL
 MYSQL_ROOT_PASSWORD=`pwgen -N1`
+MYSQL_TOKEN=`pwgen -N1`
+
+# DynDNS
 USE_DYNDNS="true"
 DYNDNS_USERNAME="iamfuzz"
 DYNDNS_PASSWORD="testing123"
 #DYNDNS_HOSTNAME="cloud-foundry.dyndns.org"
 DYNDNS_HOSTNAME="cf-negronjl.dyndns.org"
+
+# CloudFoundry Server
 CF_SERVER_IP=`facter ipaddress`
+NATS_USERNAME="natsadmin"
+NATS_PASSWORD=`pwgen -N1`
+NATS_DEFAULT_PORT="4222"
+
 
 ############################################################################################################
 # Add repositories
 ############################################################################################################
-rm -f /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
-echo deb http://ppa.launchpad.net/cloudfoundry/ppa/ubuntu oneiric main  >> /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
-echo deb-src http://ppa.launchpad.net/cloudfoundry/ppa/ubuntu oneiric main  >> /etc/apt/sources.list.d/cloudfoundry-ppa-oneiric.list
-apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E9F24FECE9E376B3B981F0FC8E42119F7BC0B676
-#apt-add-repository ppa:cloudfoundry/ppa
+apt-add-repository ppa:cloudfoundry/ppa
 apt-get -y update
 
 
@@ -75,9 +74,13 @@ echo debconf cloudfoundry-server-dea/ip string ${CF_SERVER_IP} | /usr/bin/debcon
 echo debconf cloudfoundry-server/ip string ${CF_SERVER_IP} | /usr/bin/debconf-set-selections
 
 fact-add mysql-root-password ${MYSQL_ROOT_PASSWORD}
+fact-add mysql-token ${MYSQL_TOKEN}
 fact-add use-dyndns ${USE_DYNDNS}
 fact-add dyndns-username ${DYNDNS_USERNAME}
 fact-add dyndns-password ${DYNDNS_PASSWORD}
+fact-add nats-username ${NATS_USERNAME}
+fact-add nats-password ${NATS_PASSWORD}
+fact-add nats-default-port ${NATS_DEFAULT_PORT}
 
 
 ############################################################################################################

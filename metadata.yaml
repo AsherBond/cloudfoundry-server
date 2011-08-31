@@ -6,12 +6,6 @@ description: |
    Installs Cloud Foundry Server from VMWare providing the required database,
    and the relation settings necessary to access it, and completes the
    configuration of optional services and makes it available.
-requires:
-  mysql-admin:
-    interface: mysql
-  mongodb-admin:
-    interface: mongodb
-  redis-admin:
-    interface: redis
-  cf-dea:
-    interface: cf-dea
+provides:
+  cf-server:
+    interface: cf-server
