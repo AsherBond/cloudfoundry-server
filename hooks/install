@@ -78,6 +78,7 @@ fact-add mysql-token ${MYSQL_TOKEN}
 fact-add use-dyndns ${USE_DYNDNS}
 fact-add dyndns-username ${DYNDNS_USERNAME}
 fact-add dyndns-password ${DYNDNS_PASSWORD}
+fact-add dyndns-hostname api.${DYNDNS_HOSTNAME}
 fact-add nats-username ${NATS_USERNAME}
 fact-add nats-password ${NATS_PASSWORD}
 fact-add nats-default-port ${NATS_DEFAULT_PORT}
@@ -93,6 +94,13 @@ DEBIAN_FRONTEND=noninteractive apt-get -y install cloudfoundry-server
 # Configure mysql password for cloudfoundry-server
 ############################################################################################################
 sed -i -e "s/  pass:.*/  pass: ${MYSQL_ROOT_PASSWORD}/" /opt/cloudfoundry-server/vcap/services/mysql/config/mysql_node.yml
+
+
+############################################################################################################
+# Configure all of the gateway services to point to the correct cloud_controller_uri
+############################################################################################################
+cd /opt/cloudfoundry-server/vcap/services
+find -type f | grep yml | xargs sed -i -e "s/.*cloud_controller_uri.*/cloud_controller_uri: api.${DYNDNS_HOSTNAME}/"
 
 
 ############################################################################################################
