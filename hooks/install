@@ -116,6 +116,7 @@ cd /opt/cloudfoundry-server/vcap && HOME=/root rake db:migrate && cd -
 if [ -x /usr/bin/open-port ]; then
    open-port 80/TCP
    open-port 443/TCP
+   open-port ${NATS_DEFAULT_PORT}/TCP
 fi
 
 exit 0
