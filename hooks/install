@@ -100,7 +100,7 @@ sed -i -e "s/  pass:.*/  pass: ${MYSQL_ROOT_PASSWORD}/" /opt/cloudfoundry-server
 # Configure all of the gateway services to point to the correct cloud_controller_uri
 ############################################################################################################
 cd /opt/cloudfoundry-server/vcap/services
-find -type f | grep yml | xargs sed -i -e "/^ip_route.*/d" -e "s/.*cloud_controller_uri.*/cloud_controller_uri: api.${DYNDNS_HOSTNAME}/"
+find -type f | grep yml | xargs sed -i -e "s/.*cloud_controller_uri.*/cloud_controller_uri: api.${DYNDNS_HOSTNAME}/"
 
 
 ############################################################################################################
