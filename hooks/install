@@ -28,10 +28,10 @@ MYSQL_ROOT_PASSWORD=`pwgen -N1`
 MYSQL_TOKEN=`pwgen -N1`
 
 # DynDNS
-USE_DYNDNS="false"
-DYNDNS_USERNAME="xxxxx"
-DYNDNS_PASSWORD="xxxxx"
-DYNDNS_HOSTNAME="xxxxx"
+USE_DYNDNS="true"
+DYNDNS_USERNAME="iamfuzz"
+DYNDNS_PASSWORD="testing123"
+DYNDNS_HOSTNAME="cf-negronjl.dyndns.org"
 
 # CloudFoundry Server
 CF_SERVER_IP=`facter ipaddress`
