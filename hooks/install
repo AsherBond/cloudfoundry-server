@@ -16,28 +16,49 @@ LANG=en_US.UTF-8
 # Dependency and utility packages
 ############################################################################################################
 apt-add-repository ppa:facter-plugins/ppa
+apt-add-repository ppa:charmers/charm-helpers
 apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get -y install debconf-utils python-software-properties pwgen facter facter-customfacts-plugin curl
+DEBIAN_FRONTEND=noninteractive apt-get -y install debconf-utils python-software-properties pwgen facter facter-customfacts-plugin curl charm-helper-sh
+
+############################################################################################################
+# Source the charm helpers sh functions
+############################################################################################################
+source /usr/share/charm-helper/sh/net.sh
 
 
 ############################################################################################################
 # Global variables
 ############################################################################################################
 # MySQL
-MYSQL_ROOT_PASSWORD=`pwgen -N1`
-MYSQL_TOKEN=`pwgen -N1`
+MYSQL_ROOT_PASSWORD=`config-get mysql_root_password`
+if [ "${MYSQL_ROOT_PASSWORD}" == "auto" ]; then
+	MYSQL_ROOT_PASSWORD=`pwgen -N1`
+fi
+
+MYSQL_TOKEN=`config-get mysql_token`
+if [ "${MYSQL_TOKEN}" == "auto" ]; then
+	MYSQL_TOKEN=`pwgen -N1`
+fi
 
 # DynDNS
-USE_DYNDNS="true"
-DYNDNS_USERNAME="iamfuzz"
-DYNDNS_PASSWORD="testing123"
-DYNDNS_HOSTNAME="cf-negronjl.dyndns.org"
+USE_DYNDNS=`config-get use_dyndns`
+if [ "${USE_DYNDNS}" == "True" ]; then
+	USE_DYNDNS="true"
+fi
+DYNDNS_USERNAME=`config-get dyndns_username`
+DYNDNS_PASSWORD=`config-get dyndns_password`
+DYNDNS_HOSTNAME=`config-get dyndns_hostnaem`
 
 # CloudFoundry Server
 CF_SERVER_IP=`facter ipaddress`
-NATS_USERNAME="natsadmin"
-NATS_PASSWORD=`pwgen -N1`
-NATS_DEFAULT_PORT="4222"
+CF_SERVER_PUBLIC_HOSTNAME=`unit-get public-address`
+CF_SERVER_PUBLIC_IP=`ch_get_ip ${CF_SERVER_PUBLIC_HOSTNAME}`
+NATS_USERNAME=`config-get nats_username`
+NATS_PASSWORD=`config-get nats_password`
+if [ "${NATS_PASSWORD}" == "auto" ]; then
+	NATS_PASSWORD=`pwgen -N1`
+fi
+NATS_DEFAULT_PORT=`config-get nats_default_port`
 
 
 ############################################################################################################
@@ -59,11 +80,8 @@ echo debconf mysql-server/root_password_again password ${MYSQL_ROOT_PASSWORD}| /
 echo debconf postfix/main_mailer_type select No configuration | /usr/bin/debconf-set-selections
 
 # DynDNS
-if [ "${USE_DYNDNS}" = "true" ];then
-   API_VERSION="2008-02-01"
-   METADATA_URL="http://169.254.169.254/$API_VERSION/"
-   public_ip=$(curl -s "$METADATA_URL"/meta-data/public-ipv4)
-   response=$(curl -s http://"${DYNDNS_USERNAME}":"${DYNDNS_PASSWORD}"@members.dyndns.org/nic/update?hostname="${DYNDNS_HOSTNAME}"&myip=$public_ip&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG)
+if [ "${USE_DYNDNS}" == "true" ];then
+   response=$(curl -s http://"${DYNDNS_USERNAME}":"${DYNDNS_PASSWORD}"@members.dyndns.org/nic/update?hostname="${DYNDNS_HOSTNAME}"&myip=$CF_PUBLIC_IP&wildcard=NOCHG&mx=NOCHG&backmx=NOCHG)
 fi
 
 # CloudFoundry
@@ -71,16 +89,6 @@ echo debconf cloudfoundry-server/use_dyndns boolean ${USE_DYNDNS} | /usr/bin/deb
 echo debconf cloudfoundry-server/hostname string api.${DYNDNS_HOSTNAME} | /usr/bin/debconf-set-selections
 echo debconf cloudfoundry-server-dea/ip string ${CF_SERVER_IP} | /usr/bin/debconf-set-selections
 echo debconf cloudfoundry-server/ip string ${CF_SERVER_IP} | /usr/bin/debconf-set-selections
-
-fact-add mysql-root-password ${MYSQL_ROOT_PASSWORD}
-fact-add mysql-token ${MYSQL_TOKEN}
-fact-add use-dyndns ${USE_DYNDNS}
-fact-add dyndns-username ${DYNDNS_USERNAME}
-fact-add dyndns-password ${DYNDNS_PASSWORD}
-fact-add dyndns-hostname api.${DYNDNS_HOSTNAME}
-fact-add nats-username ${NATS_USERNAME}
-fact-add nats-password ${NATS_PASSWORD}
-fact-add nats-default-port ${NATS_DEFAULT_PORT}
 
 
 ############################################################################################################
