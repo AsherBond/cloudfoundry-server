@@ -47,7 +47,7 @@ if [ "${USE_DYNDNS}" == "True" ]; then
 fi
 DYNDNS_USERNAME=`config-get dyndns_username`
 DYNDNS_PASSWORD=`config-get dyndns_password`
-DYNDNS_HOSTNAME=`config-get dyndns_hostnaem`
+DYNDNS_HOSTNAME=`config-get dyndns_hostname`
 
 # CloudFoundry Server
 CF_SERVER_IP=`facter ipaddress`
