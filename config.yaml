@@ -1,4 +1,4 @@
-cloudfoundry-server:
+options:
   mysql_root_password:
     default: auto
     type: string
