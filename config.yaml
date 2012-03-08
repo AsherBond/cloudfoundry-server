@@ -8,7 +8,7 @@ options:
     type: string
     description: MySQL token for CloudFoundry
   use_dyndns:
-    default: False
+    default: "False"
     type: string
     description: Use DynDNS.org dynamic dns?
   dyndns_username:
@@ -33,5 +33,5 @@ options:
     description: NATS server password.  Automatically generated if 'auto'
   nats_default_port:
     default: 4222
-    type: string
+    type: int
     description: Default port for the NATS server.
