@@ -1,5 +1,5 @@
-ensemble: formula
 name: cloudfoundry-server
+maintainer: Juan Negron <juan.negron@canonical.com>
 summary: "Cloud Foundry Server"
 description: |
    Installs Cloud Foundry Server from VMWare providing the required database,
